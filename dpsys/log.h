@@ -3,10 +3,10 @@
 #include <stdarg.h>
 namespace dpsys {
 
-#define DPSYS_LOG_INFO(logger, fmt, ...) logger.info(fmt, __VA_ARGS__)
-#define DPSYS_LOG_DEBUG(logger, fmt, ...) logger.debug(fmt, __VA_ARGS__)
-#define DPSYS_LOG_WARN(logger, fmt, ...) logger.warn(fmt, __VA_ARGS__)
-#define DPSYS_LOG_ERROR(logger, fmt, ...) logger.error(fmt, __VA_ARGS__)
+#define DPSYS_LOG_INFO(logger, fmt, ...) logger.info(fmt, ##__VA_ARGS__)
+#define DPSYS_LOG_DEBUG(logger, fmt, ...) logger.debug(fmt, ##__VA_ARGS__)
+#define DPSYS_LOG_WARN(logger, fmt, ...) logger.warn(fmt, ##__VA_ARGS__)
+#define DPSYS_LOG_ERROR(logger, fmt, ...) logger.error(fmt, ##__VA_ARGS__)
 
 class LogLevel {
 public:
@@ -33,7 +33,7 @@ public:
     
 };
 
-class StdOutLogAppender : LogAppender {
+class StdOutLogAppender : public LogAppender {
 public:
     typedef std::shared_ptr<StdOutLogAppender> ptr;
     StdOutLogAppender() {}
@@ -52,7 +52,7 @@ public:
     void error(const char* fmt, ...);
     
 private:
-    std::vector<StdOutLogAppender::ptr> m_appender;
+    std::vector<LogAppender::ptr> m_appender;
     LogLevel::Level m_level;
     
 };

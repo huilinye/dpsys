@@ -25,7 +25,7 @@ const char* LogLevel::ToString(LogLevel::Level level) {
 
     Logger::Logger()
         :m_level(LogLevel::Level::DEBUG) {
-        m_appender.push_back(StdOutLogAppender::ptr(new StdOutLogAppender()));
+        m_appender.push_back(LogAppender::ptr(new StdOutLogAppender())); //default std::cout appender
     }
         
 void Logger::log(LogLevel::Level level, const char* fmt, va_list argptr){
