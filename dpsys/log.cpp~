@@ -1,0 +1,10 @@
+#include "log.h"
+#include <iostream>
+namesapce dpsys{
+    
+void print(int a) {
+    std::cout<<a<<std::endl;
+}
+
+
+}  // namesapce dpsys
