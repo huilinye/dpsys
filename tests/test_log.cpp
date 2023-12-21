@@ -2,7 +2,9 @@
 
 
 int main(int argc, char** argv) {
-    dpsys::print(3);
-    return 0;
+    dpsys::Logger log;
 
+    DPSYS_LOG_INFO(log, "this is info message");
+    DPSYS_LOG_WARN(log, "This is warnning message");
+    return 0;
 }
