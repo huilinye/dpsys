@@ -6,5 +6,6 @@ int main(int argc, char** argv) {
 
     DPSYS_LOG_INFO(log, "this is info message");
     DPSYS_LOG_WARN(log, "This is warnning message");
+    DPSYS_LOG_ERROR(log, "This is error message");
     return 0;
 }
