@@ -23,7 +23,9 @@ const char* LogLevel::ToString(LogLevel::Level level) {
     return "UNKNOW";
 }
 
-LogEvent::LogEvent(Logger& logger, LogLevel::Level level, const char* file, int line, const char* fmt, ...) {
+LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int line, const char* fmt, ...)
+    :m_logger(logger)
+    ,m_level(level){
     // Write time format
     struct tm tm;
     time_t now = time(0);
@@ -52,7 +54,12 @@ LogEvent::LogEvent(Logger& logger, LogLevel::Level level, const char* file, int 
     }
     va_end(argptr);
     //std::cout<<m_ss.str();
-    logger.log(level, *this);
+    //logger.log(level, *this);
+}
+
+LogEvent::~LogEvent() {
+    m_logger->log(m_level, *this);
+
 }
 
 Logger::Logger()

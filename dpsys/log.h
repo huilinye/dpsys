@@ -35,9 +35,12 @@ class Logger;
     
 class LogEvent {
 public:
-    LogEvent(Logger& logger, LogLevel::Level level, const char* file, int line, const char* fmt, ...);
+    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const char* file, int line, const char* fmt, ...);
+    ~LogEvent();
     std::stringstream& getSS() { return m_ss; }
 private:
+    std::shared_ptr<Logger> m_logger;
+    LogLevel::Level m_level;
     std::stringstream m_ss;
 };
 
@@ -73,6 +76,7 @@ private:
 
 class Logger {
 public:
+    typedef std::shared_ptr<Logger> ptr;
     Logger();
     void log(LogLevel::Level level, LogEvent& event);
     void addAppender(LogAppender::ptr newAppender);
