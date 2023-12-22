@@ -23,82 +23,76 @@ const char* LogLevel::ToString(LogLevel::Level level) {
     return "UNKNOW";
 }
 
+LogEvent::LogEvent(Logger& logger, LogLevel::Level level, const char* file, int line, const char* fmt, ...) {
+    // Write time format
+    struct tm tm;
+    time_t now = time(0);
+    localtime_r(&now, &tm);
+    char buf[64];
+    std::string time_format = "%Y-%m-%d %H:%M:%S \t";
+    strftime(buf, sizeof(buf), time_format.c_str(), &tm);
+    m_ss << buf;
+
+    // Write file and line info
+    std::string temp(file);
+    auto begin = temp.rfind("/");
+    std::string file_name = temp.substr(begin+1);
+    m_ss<<file_name<<":"<<line<<"\t";
+    // Write log level format
+    m_ss<<std::string(LogLevel::ToString(level))<<"\t|\t";
+
+    // Write log message
+    va_list argptr;
+    va_start(argptr, fmt);
+    char* str = nullptr;
+    int len = vasprintf(&str, fmt, argptr);
+    if( len != -1) {
+        m_ss<<std::string(str, len)<<std::endl;
+        free(str);
+    }
+    va_end(argptr);
+    //std::cout<<m_ss.str();
+    logger.log(level, *this);
+}
+
 Logger::Logger()
     :m_level(LogLevel::Level::DEBUG) {
     m_appender.push_back(LogAppender::ptr(new StdOutLogAppender())); //default std::cout appender
 }
         
-void Logger::log(LogLevel::Level level, std::string file_name, int line_number, const char* fmt, va_list argptr){
+void Logger::log(LogLevel::Level level, LogEvent& event){
     if( level >= m_level) {
         for(auto i : m_appender) {
-            i->log(level, file_name, line_number, fmt, argptr);
+            i->log(level, event);
+        }
+        if(level >= LogLevel::ERROR) {
+            throw std::runtime_error("Abort due to error!");
         }
         
     }
     
 }
 
-void Logger::info(std::string file_name, int line_number, const char* fmt, ...) {
-    va_list argptr;
-    va_start(argptr, fmt);
-    log(LogLevel::INFO, file_name, line_number, fmt, argptr);
-    va_end(argptr);
+void Logger::addAppender(LogAppender::ptr newAppender) {
+    m_appender.push_back(newAppender);
 }
+
+void StdOutLogAppender::log(LogLevel::Level level, LogEvent& event) {
+    std::cout<<event.getSS().str();
+}
+
+FileLogAppender::FileLogAppender(const char* file_name)
+    :m_fileName(file_name){}
     
-void Logger::debug(std::string file_name, int line_number, const char* fmt, ...) {
-    va_list argptr;
-    va_start(argptr, fmt);
-    log(LogLevel::DEBUG,  file_name, line_number, fmt, argptr);
-    va_end(argptr);
-}
-
-void Logger::warn(std::string file_name, int line_number, const char* fmt, ...){
-    va_list argptr;
-    va_start(argptr, fmt);
-    log(LogLevel::WARN,  file_name, line_number, fmt, argptr);
-    va_end(argptr);
-}
-
-void Logger::error(std::string file_name, int line_number, const char* fmt, ...) {
-    va_list argptr;
-    va_start(argptr, fmt);
-    log(LogLevel::ERROR, file_name, line_number, fmt, argptr);
-    va_end(argptr);
-    throw std::runtime_error("Abort due to error!");
-}
-
-
-
-void write_format(std::ostream& ofs, LogLevel::Level level, std::string file_name, int line_number, const char* fmt, va_list argptr) {
-    
-    char* str = nullptr;
-    int len = vasprintf(&str, fmt, argptr);
-    if( len != -1) {
-
-        // Write time format
-        struct tm tm;
-        time_t now = time(0);
-        localtime_r(&now, &tm);
-        char buf[64];
-        std::string time_format = "%Y-%m-%d %H:%M:%S \t";
-        strftime(buf, sizeof(buf), time_format.c_str(), &tm);
-        ofs << buf;
-
-        // Write file and line info
-        auto begin = file_name.rfind("/");
-        std::string file = file_name.substr(begin+1);
-        ofs<<file<<":"<<line_number<<"\t";
-        // Write log level format
-        ofs<<std::string(LogLevel::ToString(level))<<"\t|\t";
-
-        // Write log message
-        ofs<<std::string(str, len)<<std::endl;
-        free(str);
+void FileLogAppender::log(LogLevel::Level level, LogEvent& event) {
+    if(m_of.is_open()){
+        m_of<<event.getSS().str();
+        m_of.close();
+    } else {
+        m_of.open(m_fileName);
+        m_of<<event.getSS().str();
+        m_of.close();
     }
-}
-
-void StdOutLogAppender::log(LogLevel::Level level, std::string file_name, int line_number, const char* fmt, va_list argptr) {
-    write_format(std::cout, level, file_name, line_number, fmt, argptr);
 }
 
 }  // namesapce dpsys

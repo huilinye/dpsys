@@ -3,12 +3,19 @@
 #include <memory>
 #include <vector>
 #include <stdarg.h>
+#include <sstream>
+#include <fstream>
+
 namespace dpsys {
 
-#define DPSYS_LOG_INFO(logger, fmt, ...) logger.info(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
-#define DPSYS_LOG_DEBUG(logger, fmt, ...) logger.debug(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
-#define DPSYS_LOG_WARN(logger, fmt, ...) logger.warn(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
-#define DPSYS_LOG_ERROR(logger, fmt, ...) logger.error(__FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#define DPSYS_LOG(logger, level, fmt, ...) \
+    dpsys::LogEvent(logger, level, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+    
+
+#define DPSYS_LOG_INFO(logger, fmt, ...) DPSYS_LOG(logger, dpsys::LogLevel::Level::INFO, fmt, ##__VA_ARGS__)
+#define DPSYS_LOG_DEBUG(logger, fmt, ...) DPSYS_LOG(logger, dpsys::LogLevel::Level::DEBUG, fmt, ##__VA_ARGS__)
+#define DPSYS_LOG_WARN(logger, fmt, ...) DPSYS_LOG(logger, dpsys::LogLevel::Level::WARN, fmt, ##__VA_ARGS__)
+#define DPSYS_LOG_ERROR(logger, fmt, ...) DPSYS_LOG(logger, dpsys::LogLevel::Level::ERROR, fmt, ##__VA_ARGS__)
 
 class LogLevel {
 public:
@@ -24,6 +31,16 @@ public:
     static const char* ToString(Level level);
 };
 
+class Logger;
+    
+class LogEvent {
+public:
+    LogEvent(Logger& logger, LogLevel::Level level, const char* file, int line, const char* fmt, ...);
+    std::stringstream& getSS() { return m_ss; }
+private:
+    std::stringstream m_ss;
+};
+
 class LogAppender {
 
 public:
@@ -31,7 +48,7 @@ public:
     
     virtual ~LogAppender() {}
 
-    virtual void log(LogLevel::Level level, std::string file_name, int line_number, const char* fmt, va_list argptr) = 0;
+    virtual void log(LogLevel::Level level, LogEvent& event) = 0;
     
 };
 
@@ -39,20 +56,26 @@ class StdOutLogAppender : public LogAppender {
 public:
     typedef std::shared_ptr<StdOutLogAppender> ptr;
     StdOutLogAppender() {}
-    void log(LogLevel::Level level, std::string file_name, int line_number, const char* fmt, va_list argptr) override;
+    void log(LogLevel::Level level, LogEvent& event) override;
     
 };
 
+class FileLogAppender : public LogAppender {
+public:
+    typedef std::shared_ptr<FileLogAppender> ptr;
+    FileLogAppender(const char* file_name = "system.log");
+    void log(LogLevel::Level level, LogEvent& event) override;
+private:
+    const char* m_fileName;
+    std::ofstream m_of;
+    
+};
 
 class Logger {
 public:
     Logger();
-    void log(LogLevel::Level level, std::string file_name, int line_number, const char* fmt, va_list argptr);
-    void info(std::string file_name, int line_number, const char* fmt, ...);
-    void debug(std::string file_name, int line_number, const char* fmt, ...);
-    void warn(std::string file_name, int line_number, const char* fmt, ...);
-    void error(std::string file_name, int line_number, const char* fmt, ...);
-    
+    void log(LogLevel::Level level, LogEvent& event);
+    void addAppender(LogAppender::ptr newAppender);
 private:
     std::vector<LogAppender::ptr> m_appender;
     LogLevel::Level m_level;
