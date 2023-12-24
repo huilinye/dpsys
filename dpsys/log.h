@@ -5,7 +5,8 @@
 #include <stdarg.h>
 #include <sstream>
 #include <fstream>
-
+#include <map>
+#include "singleton.h"
 namespace dpsys {
 
 #define DPSYS_LOG(logger, level, fmt, ...) \
@@ -77,13 +78,28 @@ private:
 class Logger {
 public:
     typedef std::shared_ptr<Logger> ptr;
-    Logger();
+    Logger(std::string name);
     void log(LogLevel::Level level, LogEvent& event);
     void addAppender(LogAppender::ptr newAppender);
+    const LogLevel::Level getLevel() const { return m_level; }
+    const std::string getName() const { return m_name; }
 private:
     std::vector<LogAppender::ptr> m_appender;
     LogLevel::Level m_level;
+    std::string m_name;
     
 };
+
+class LogManager {
+public:
+    typedef std::shared_ptr<LogManager> ptr;
+    LogManager();
+    Logger::ptr getLogger(std::string key);
+private:
+    std::map<std::string, Logger::ptr> m_loggers;
+
+};
+
+typedef SingletonPtr<LogManager> LoggerMgr;
     
 }

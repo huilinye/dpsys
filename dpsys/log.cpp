@@ -62,8 +62,9 @@ LogEvent::~LogEvent() {
 
 }
 
-Logger::Logger()
-    :m_level(LogLevel::Level::DEBUG) {
+Logger::Logger(std::string name)
+    :m_level(LogLevel::Level::DEBUG)
+    ,m_name(name) {
     m_appender.push_back(LogAppender::ptr(new StdOutLogAppender())); //default std::cout appender
 }
         
@@ -102,4 +103,22 @@ void FileLogAppender::log(LogLevel::Level level, LogEvent& event) {
     }
 }
 
+
+LogManager::LogManager() {
+    Logger::ptr root = Logger::ptr( new Logger("root") );
+    m_loggers[root->getName()] = root;
+};
+
+Logger::ptr LogManager::getLogger(std::string key) {
+    auto it = m_loggers.find(key);
+    if( it != m_loggers.end()) {
+        return it->second;
+    }
+
+    Logger::ptr newLogger = Logger::ptr( new Logger(key) );
+    m_loggers[newLogger->getName()] = newLogger;
+    return newLogger;
+}
+
+    
 }  // namesapce dpsys
