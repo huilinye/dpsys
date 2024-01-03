@@ -14,6 +14,8 @@ include_directories(.)
 
 set(LIB_SRC
         dpsys/log.cpp
+        dpsys/socket/address.cpp
+        dpsys/socket/socket.cpp
         )
 
 set(LIBS
@@ -26,6 +28,8 @@ add_library(dpsys SHARED ${LIB_SRC})
 #add_dependencies(test_log dpsys)
 #target_link_libraries(test_log dpsys)
 dpsys_add_executable(test_log tests/test_log.cpp dpsys ${LIBS})
+dpsys_add_executable(test_tcp_client tests/test_tcp_client.cpp dpsys ${LIBS})
+dpsys_add_executable(test_tcp_server tests/test_tcp_server.cpp dpsys ${LIBS})
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
